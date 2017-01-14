@@ -1,0 +1,16 @@
+[ {
+  "image_url" : "image/product-A",
+  "title" : "product-A",
+  "description" : "cheap",
+  "price" : 20
+}, {
+  "image_url" : "image/product-B",
+  "title" : "product-B ver2",
+  "description" : "so cool",
+  "price" : 300
+}, {
+  "image_url" : "image/product-C",
+  "title" : "product-C",
+  "description" : "cheap",
+  "price" : 500
+} ]
