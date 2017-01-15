@@ -13,4 +13,24 @@
   "title" : "product-C",
   "description" : "cheap",
   "price" : 500
+}, {
+  "image_url" : "image/product-sample",
+  "title" : "sample-product",
+  "description" : "it is sample product",
+  "price" : 398
+}, {
+  "image_url" : "image/product-sample",
+  "title" : "sample-product",
+  "description" : "it is sample product",
+  "price" : 698
+}, {
+  "image_url" : "image/product-sample",
+  "title" : "sample-product",
+  "description" : "it is sample product",
+  "price" : 798
+}, {
+  "image_url" : "image/product-sample",
+  "title" : "sample-product",
+  "description" : "it is sample product",
+  "price" : 798
 } ]

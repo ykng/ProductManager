@@ -7,6 +7,7 @@ import play.mvc.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class ProductController extends Controller{
@@ -33,7 +34,7 @@ public class ProductController extends Controller{
         } else if( description.length() > 500 ) {
             return badRequest("The parameter is too long! [Description length is 500 characters]");
         } else if( price < 0 ) {
-            return badRequest("Invalid parameter! [The price inputted]");
+            return badRequest("Invalid parameter! [The inputted 'price' value is negative]");
         }
 
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -56,7 +57,7 @@ public class ProductController extends Controller{
         }
 
         //　レスポンス内容はリクエストデータ追加後の全商品データ
-        return ok(Json.prettyPrint(rootNode));
+        return created(Json.prettyPrint(rootNode));
     }
 
     /********************
@@ -64,15 +65,15 @@ public class ProductController extends Controller{
      ********************/
     public Result search() {
 
-        String[] words = {};
+        String[] keywords = {};
         int max_price = Integer.MAX_VALUE;
         int min_price = 0;
 
-        // POSTされたパラメータを取得
-        Map<String, String[]> form = request().body().asFormUrlEncoded();
-        if( form.containsKey("word") )  words = form.get("word");
-        if( form.containsKey("max") )   max_price = Integer.parseInt(form.get("max")[0]);
-        if( form.containsKey("min") )   min_price = Integer.parseInt(form.get("min")[0]);
+        // リクエストパラメータを取得
+        Map<String, String[]> form = request().queryString();
+        if( form.containsKey("keyword") )  keywords  = form.get("keyword");
+        if( form.containsKey("max") )      max_price = Integer.parseInt(form.get("max")[0]);
+        if( form.containsKey("min") )      min_price = Integer.parseInt(form.get("min")[0]);
 
         // パラメータチェック
         if( max_price < min_price ) {
@@ -97,7 +98,7 @@ public class ProductController extends Controller{
 
                 // 検索条件と一致するデータを後に出力するrootNodeに追加
                 int flag = 0;
-                for( String word : words ) {
+                for( String word : keywords ) {
                     if( !(title.contains(word) || description.contains(word)) ) {
                         flag = 1;
                         break;
@@ -119,21 +120,20 @@ public class ProductController extends Controller{
     /********************
         商品データ削除
      ********************/
+    @BodyParser.Of(BodyParser.Json.class)
     public Result delete() {
 
-        String[] words = {};
-        int price = 0;
+        JsonNode json_input = request().body().asJson();
 
-        // POSTされたパラメータを取得
-        Map<String, String[]> form = request().body().asFormUrlEncoded();
-        if( form.containsKey("word") )  words = form.get("word");
-        if( form.containsKey("price") ) price = Integer.parseInt(form.get("price")[0]);
+        //　リクエストパラメータを取得
+        List<String> keywords  = json_input.findValuesAsText("keyword");
+        int          price     = json_input.findPath("price").intValue();
 
         // パラメータチェック
-        if( !(form.containsKey("word") && form.containsKey("price")) ) {
-            return badRequest("Please set 'word' and 'price' to delete product");
-        } else if( form.containsKey("price") && form.get("price").length > 1 ) {
-            return badRequest("Please set the 'price' only one");
+        if( keywords == null ) {
+            return badRequest( "Missing parameter! [keyword]");
+        } else if( price < 0 ) {
+            return badRequest("Invalid parameter! [The inputted 'price' value is negative]");
         }
 
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -150,7 +150,7 @@ public class ProductController extends Controller{
 
                 // 検索条件と一致していればdeleteNodeに、一致していなければrootNodeに追加
                 int flag = 1;
-                for( String word : words ) {
+                for( String word : keywords ) {
                     if( !title.contains(word) ) {
                         flag = 0;
                         break;
