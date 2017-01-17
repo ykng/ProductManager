@@ -19,7 +19,7 @@
 
 ----------------
 
-### 登録
+## 登録
 - HTTPメソッド : POST
 - パラメータ : 商品データのJSON  
 - レスポンス形式 : JSON  
@@ -29,13 +29,13 @@
 登録後の全商品一覧を表示する。  
   
 **リクエスト例**  
-<code>
+　　<code>
 curl -X POST http://localhost:9000/products 
 　　　-H "Content-Type: application/json" 
 　　　-d '{"id":7, "image_url":"image/product7", "title":"product7", "description":"it is lucky product", "price":777}'  
-</code>
+　　</code>
 
-### 検索  
+## 検索  
 - HTTPメソッド : GET
 - パラメータ : id（商品id）, keyword（検索キーワード）, max（最大価格）, min（最小価格）  
 - レスポンス形式 : JSON  
@@ -43,20 +43,20 @@ curl -X POST http://localhost:9000/products
 
 入力したパラメータによる検索を行い、該当する商品データを全て表示。  
 全てのパラメータを指定しても、複数指定でも、単独指定でも検索可能。  
-idとpriceにはついては完全一致の場合のみ、keywordはtitleまたはdiscriptionの内容の中に含まれているかで検索を行う。  
+idとpriceについては完全一致かどうか、keywordはtitleまたはdiscriptionの内容に含まれているかで検索を行う。  
 
 **リクエスト例**  
 <code>
 curl http://localhost:9000/products\?id=7\&keyword=lucky\&keyword=product\&max=1000\&min=100  
 </code>
 
-### 削除
+## 削除
 - HTTPメソッド : DELETE
 - パラメータ : id, keyword, price のJSON
 - レスポンス形式 : JSON  
 - レスポンス内容 : 削除した商品データ
   
-入力したパラメータによる検索を行い、該当する商品を削除。  
+入力したパラメータによる検索を行い、該当する商品を削除。  
 検索方法については、上の検索と同じ。  
 
 **リクエスト例**  
