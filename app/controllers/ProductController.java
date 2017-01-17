@@ -1,16 +1,30 @@
 package controllers;
 
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import play.libs.Json;
+import models.Converter;
+import play.db.Database;
 import play.mvc.*;
-
-import java.io.File;
-import java.io.IOException;
+import javax.inject.Inject;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
 
 public class ProductController extends Controller{
+
+    private Database db;
+    private Statement stmt;
+
+    @Inject
+    public ProductController(Database db) {
+        this.db = db;
+        Connection con = db.getConnection();
+
+        try {
+            stmt = con.createStatement();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     /********************
         商品データ登録
@@ -21,43 +35,51 @@ public class ProductController extends Controller{
         JsonNode json_input = request().body().asJson();
 
         //　POSTされたパラメータを取得
+        int    id           = json_input.findPath("id").intValue();
         String image_url    = json_input.findPath("image_url").textValue();
         String title        = json_input.findPath("title").textValue();
         String description  = json_input.findPath("description").textValue();
         int    price        = json_input.findPath("price").intValue();
 
         //　POSTされたパラメータが正常な値かチェック
-        if( image_url == null || title == null || description == null ) {
-            return badRequest( "Missing parameter! [Required: image_url, title, description(, price)]");
+        if( !json_input.findPath("id").isInt() || !json_input.findPath("price").isInt() ) {
+            return badRequest( "'id' or 'price' must be of type int" );
+        } else if( !json_input.findPath("image_url").isTextual() || !json_input.findPath("title").isTextual()
+                || !json_input.findPath("description").isTextual() ) {
+            return badRequest("'image_url' or 'title' or 'description' must be of type String" );
+        } else if( id == 0 || image_url == null || title == null || description == null ) {
+            return badRequest( "Missing parameter! [Required: id, image_url, title, description(, price)]" );
         } else if( title.length() > 100 ) {
-            return badRequest("The parameter is too long! [Title length is 100 characters]");
+            return badRequest("The parameter is too long! [Title length is 100 characters]" );
         } else if( description.length() > 500 ) {
-            return badRequest("The parameter is too long! [Description length is 500 characters]");
+            return badRequest("The parameter is too long! [Description length is 500 characters]" );
         } else if( price < 0 ) {
-            return badRequest("Invalid parameter! [The inputted 'price' value is negative]");
+            return badRequest("Invalid parameter! [The inputted 'price' value is negative]" );
         }
 
-        ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        ArrayNode rootNode = mapper.createArrayNode();
+        // クエリ作成
+        StringBuilder sb = new StringBuilder();
+        String query_r = sb.append("INSERT INTO PRODUCT VALUES ( '")
+                .append(String.valueOf(id)).append("', '")
+                .append(image_url).append("', '")
+                .append(title).append("', '")
+                .append(description).append("', '")
+                .append(String.valueOf(price)).append("' );")
+                .toString();
+        String query_s = "SELECT * FROM product";
 
-        //　現存するjsonデータにPOSTされたjsonデータを追加
         try {
-            File file = new File("data/product.json");
-            JsonNode current;
-            for(int i=0; (current = mapper.readTree(file).get(i)) != null; i++) {
-                rootNode.add(current);
-            }
-            rootNode.add(json_input);
+            // 商品データ登録
+            stmt.executeUpdate(query_r);
 
-            mapper.writeValue(file, rootNode);
+            // 全商品データ検索
+            ResultSet rs = stmt.executeQuery(query_s);
+            return created(Converter.convertToJsonString(rs));
 
-        } catch( IOException e ) {
+        } catch(SQLException e) {
             e.printStackTrace();
-            return badRequest("Failed to open or write file.");
+            return badRequest("Failed to execute sql operation");
         }
-
-        //　レスポンス内容はリクエストデータ追加後の全商品データ
-        return created(Json.prettyPrint(rootNode));
     }
 
     /********************
@@ -65,12 +87,14 @@ public class ProductController extends Controller{
      ********************/
     public Result search() {
 
+        int id = 0;
         String[] keywords = {};
         int max_price = Integer.MAX_VALUE;
         int min_price = 0;
 
         // リクエストパラメータを取得
         Map<String, String[]> form = request().queryString();
+        if( form.containsKey("id") )       id        = Integer.parseInt(form.get("id")[0]);
         if( form.containsKey("keyword") )  keywords  = form.get("keyword");
         if( form.containsKey("max") )      max_price = Integer.parseInt(form.get("max")[0]);
         if( form.containsKey("min") )      min_price = Integer.parseInt(form.get("min")[0]);
@@ -78,43 +102,35 @@ public class ProductController extends Controller{
         // パラメータチェック
         if( max_price < min_price ) {
             return badRequest("Invalid parameter [ Please set it to be 'max' > 'min' ]");
+        } else if( form.containsKey("id") && form.get("id").length > 1 ) {
+            return badRequest("Please set the 'id' only one");
         } else if( form.containsKey("max") && form.get("max").length > 1 ) {
             return badRequest("Please set the 'max' only one");
         } else if( form.containsKey("min") && form.get("min").length > 1 ) {
             return badRequest("Please set the 'min' only one");
         }
 
-        ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        ArrayNode rootNode = mapper.createArrayNode();
-
-        try{
-            // 全商品データを読み込む
-            File file = new File("data/product.json");
-            JsonNode current;
-            for(int i=0; (current = mapper.readTree(file).get(i)) != null; i++) {
-                String title = current.get("title").textValue();
-                String description = current.get("description").textValue();
-                int price = current.get("price").asInt();
-
-                // 検索条件と一致するデータを後に出力するrootNodeに追加
-                int flag = 0;
-                for( String word : keywords ) {
-                    if( !(title.contains(word) || description.contains(word)) ) {
-                        flag = 1;
-                        break;
-                    }
-                }
-                if( flag == 0 && min_price <= price && price <= max_price ) {
-                    rootNode.add(current);
-                }
-            }
-
-        } catch( IOException e ) {
-            e.printStackTrace();
-            return badRequest("Failed to open file.");
+        //　クエリ作成
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT * FROM PRODUCT WHERE ");
+        if( id != 0 ) {
+            sb.append("id = ").append(String.valueOf(id)).append(" AND ");
         }
+        for( String word : keywords ) {
+            sb.append("(title LIKE '%").append(word).append("%' OR description LIKE '%").append(word).append("%') AND ");
+        }
+        sb.append("price BETWEEN ").append(String.valueOf(min_price)).append(" AND ").append(String.valueOf(max_price));
+        String query = sb.toString();
 
-        return ok(Json.prettyPrint(rootNode));
+        try {
+            // データ検索
+            ResultSet rs = stmt.executeQuery(query);
+            return ok(Converter.convertToJsonString(rs));
+
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return badRequest("Failed to execute sql operation");
+        }
     }
 
     /********************
@@ -126,52 +142,46 @@ public class ProductController extends Controller{
         JsonNode json_input = request().body().asJson();
 
         //　リクエストパラメータを取得
+        int          id        = json_input.findPath("id").intValue();
         List<String> keywords  = json_input.findValuesAsText("keyword");
         int          price     = json_input.findPath("price").intValue();
 
         // パラメータチェック
-        if( keywords == null ) {
-            return badRequest( "Missing parameter! [keyword]");
+        if( !json_input.findPath("id").isInt() || !json_input.findPath("price").isInt() ) {
+            return badRequest("'id' or 'price' must be of type int");
+        } else if( id == 0 && keywords.isEmpty() && price == 0 ) {
+            return badRequest("Missing parameter! ['id' or 'keyword' or 'price' is required]");
         } else if( price < 0 ) {
             return badRequest("Invalid parameter! [The inputted 'price' value is negative]");
         }
 
-        ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        ArrayNode rootNode = mapper.createArrayNode();
-        ArrayNode deleteNode = mapper.createArrayNode();
+        //　クエリ作成
+        String query_select = "SELECT * FROM PRODUCT WHERE ";
+        String query_delete = "DELETE FROM PRODUCT WHERE ";
 
-        try{
-            // 全商品データを読み込む
-            File file = new File("data/product.json");
-            JsonNode current;
-            for(int i=0; (current = mapper.readTree(file).get(i)) != null; i++) {
-                String title = current.get("title").textValue();
-                int product_price = current.get("price").asInt();
-
-                // 検索条件と一致していればdeleteNodeに、一致していなければrootNodeに追加
-                int flag = 1;
-                for( String word : keywords ) {
-                    if( !title.contains(word) ) {
-                        flag = 0;
-                        break;
-                    }
-                }
-                if( flag == 1 && (price == product_price) ) {
-                    deleteNode.add(current);
-                } else {
-                    rootNode.add(current);
-                }
-            }
-
-            // rootNodeにあるデータ（検索条件に一致しないデータ）をファイルに書きこむ
-            mapper.writeValue(file, rootNode);
-
-        } catch( IOException e ) {
-            e.printStackTrace();
-            return badRequest("Failed to open or write file.");
+        StringBuilder sb = new StringBuilder();
+        if( id != 0 ) {
+            sb.append("id = ").append(String.valueOf(id)).append(" AND ");
         }
+        for( String word : keywords ) {
+            sb.append("(title LIKE '%").append(word).append("%' OR description LIKE '%").append(word).append("%') AND ");
+        }
+        sb.append("price = ").append(String.valueOf(price));
 
-        // 削除されたデータを表示
-        return ok(Json.prettyPrint(deleteNode));
+        try {
+            //　削除するデータを格納
+            ResultSet rs = stmt.executeQuery( query_select + sb.toString() );
+            String deleted_product_data = Converter.convertToJsonString(rs);
+
+            //  データ削除
+            stmt.executeUpdate( query_delete + sb.toString() );
+
+            //  削除したデータを返す
+            return ok(deleted_product_data);
+
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return badRequest("Failed to execute sql operation");
+        }
     }
 }
