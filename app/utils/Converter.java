@@ -1,4 +1,4 @@
-package models;
+package utils;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import models.Product;
 import play.libs.Json;
 
 import java.sql.ResultSet;
@@ -13,7 +14,7 @@ import java.sql.SQLException;
 
 public class Converter {
 
-    public static String convertToJsonString(ResultSet rs) throws SQLException {
+    public static String convertResultSetToJson(ResultSet rs) throws SQLException {
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         ArrayNode rootNode = mapper.createArrayNode();

@@ -1,12 +1,13 @@
 package controllers;
 
-import com.fasterxml.jackson.databind.*;
-import models.Converter;
+import models.Product;
+import models.SearchCondition;
 import play.db.Database;
 import play.mvc.*;
+import utils.Converter;
+
 import javax.inject.Inject;
 import java.sql.*;
-import java.util.List;
 import java.util.Map;
 
 public class ProductController extends Controller{
@@ -29,52 +30,30 @@ public class ProductController extends Controller{
     /********************
         商品データ登録
      ********************/
-    @BodyParser.Of(BodyParser.Json.class)
+    @BodyParser.Of(Product.ProductBodyParser.class)
     public Result register() {
 
-        JsonNode json_input = request().body().asJson();
-
-        //　POSTされたパラメータを取得
-        int    id           = json_input.findPath("id").intValue();
-        String image_url    = json_input.findPath("image_url").textValue();
-        String title        = json_input.findPath("title").textValue();
-        String description  = json_input.findPath("description").textValue();
-        int    price        = json_input.findPath("price").intValue();
-
-        //　POSTされたパラメータが正常な値かチェック
-        if( !json_input.findPath("id").isInt() || !json_input.findPath("price").isInt() ) {
-            return badRequest( "'id' or 'price' must be of type int" );
-        } else if( !json_input.findPath("image_url").isTextual() || !json_input.findPath("title").isTextual()
-                || !json_input.findPath("description").isTextual() ) {
-            return badRequest("'image_url' or 'title' or 'description' must be of type String" );
-        } else if( id == 0 || image_url == null || title == null || description == null ) {
-            return badRequest( "Missing parameter! [Required: id, image_url, title, description(, price)]" );
-        } else if( title.length() > 100 ) {
-            return badRequest("The parameter is too long! [Title length is 100 characters]" );
-        } else if( description.length() > 500 ) {
-            return badRequest("The parameter is too long! [Description length is 500 characters]" );
-        } else if( price < 0 ) {
-            return badRequest("Invalid parameter! [The inputted 'price' value is negative]" );
-        }
+        //　リクエストパラメータ取得
+        Product product = request().body().as(Product.class);
 
         // クエリ作成
         StringBuilder sb = new StringBuilder();
         String query_r = sb.append("INSERT INTO PRODUCT VALUES ( '")
-                .append(String.valueOf(id)).append("', '")
-                .append(image_url).append("', '")
-                .append(title).append("', '")
-                .append(description).append("', '")
-                .append(String.valueOf(price)).append("' );")
+                .append(String.valueOf(product.getId())).append("', '")
+                .append(product.getImage_url()).append("', '")
+                .append(product.getTitle()).append("', '")
+                .append(product.getDescription()).append("', '")
+                .append(String.valueOf(product.getPrice())).append("' );")
                 .toString();
         String query_s = "SELECT * FROM product";
 
         try {
-            // 商品データ登録
+            // DBに商品データ登録
             stmt.executeUpdate(query_r);
 
             // 全商品データ検索
             ResultSet rs = stmt.executeQuery(query_s);
-            return created(Converter.convertToJsonString(rs));
+            return created(Converter.convertResultSetToJson(rs));
 
         } catch(SQLException e) {
             e.printStackTrace();
@@ -125,7 +104,7 @@ public class ProductController extends Controller{
         try {
             // データ検索
             ResultSet rs = stmt.executeQuery(query);
-            return ok(Converter.convertToJsonString(rs));
+            return ok(Converter.convertResultSetToJson(rs));
 
         } catch(SQLException e) {
             e.printStackTrace();
@@ -136,47 +115,34 @@ public class ProductController extends Controller{
     /********************
         商品データ削除
      ********************/
-    @BodyParser.Of(BodyParser.Json.class)
+    @BodyParser.Of(SearchCondition.SearchConditionBodyParser.class)
     public Result delete() {
 
-        JsonNode json_input = request().body().asJson();
-
-        //　リクエストパラメータを取得
-        int          id        = json_input.findPath("id").intValue();
-        List<String> keywords  = json_input.findValuesAsText("keyword");
-        int          price     = json_input.findPath("price").intValue();
-
-        // パラメータチェック
-        if( !json_input.findPath("id").isInt() || !json_input.findPath("price").isInt() ) {
-            return badRequest("'id' or 'price' must be of type int");
-        } else if( id == 0 && keywords.isEmpty() && price == 0 ) {
-            return badRequest("Missing parameter! ['id' or 'keyword' or 'price' is required]");
-        } else if( price < 0 ) {
-            return badRequest("Invalid parameter! [The inputted 'price' value is negative]");
-        }
+        // リクエストパラメータを取得
+        SearchCondition sc = request().body().as(SearchCondition.class);
 
         //　クエリ作成
         String query_select = "SELECT * FROM PRODUCT WHERE ";
         String query_delete = "DELETE FROM PRODUCT WHERE ";
-
         StringBuilder sb = new StringBuilder();
-        if( id != 0 ) {
-            sb.append("id = ").append(String.valueOf(id)).append(" AND ");
-        }
-        for( String word : keywords ) {
+        if( !sc.getKeyword().isEmpty() ) {
+            String word = sc.getKeyword();
             sb.append("(title LIKE '%").append(word).append("%' OR description LIKE '%").append(word).append("%') AND ");
         }
-        sb.append("price = ").append(String.valueOf(price));
+        if( sc.getPrice() != 0 ) {
+            sb.append("price = ").append(String.valueOf(sc.getPrice())).append(" AND ");
+        }
+        sb.append("id = ").append(String.valueOf(sc.getId()));
 
         try {
-            //　削除するデータを格納
+            //　削除するデータを表示用に取り置き
             ResultSet rs = stmt.executeQuery( query_select + sb.toString() );
-            String deleted_product_data = Converter.convertToJsonString(rs);
+            String deleted_product_data = Converter.convertResultSetToJson(rs);
 
-            //  データ削除
+            //  DBからデータ削除
             stmt.executeUpdate( query_delete + sb.toString() );
 
-            //  削除したデータを返す
+            //  削除したデータを表示
             return ok(deleted_product_data);
 
         } catch(SQLException e) {
