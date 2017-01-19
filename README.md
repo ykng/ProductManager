@@ -63,5 +63,5 @@ curl http://localhost:9000/products\?id=7\&keyword=lucky\&keyword=product\&max=1
 <code>
 curl -X DELETE http://localhost:9000/products 
 　　　-H "Content-Type: application/json" 
-　　　-d '{"id":7, "keyword":["sample", "product"], "price":298}'
+　　　-d '{"id":7, "keyword":"sample", "price":298}'
 </code>
