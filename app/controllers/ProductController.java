@@ -1,7 +1,7 @@
 package controllers;
 
 import models.Product;
-import models.SearchCondition;
+import models.DeleteCondition;
 import play.db.Database;
 import play.mvc.*;
 import utils.Converter;
@@ -73,20 +73,37 @@ public class ProductController extends Controller{
 
         // リクエストパラメータを取得
         Map<String, String[]> form = request().queryString();
-        if( form.containsKey("id") )       id        = Integer.parseInt(form.get("id")[0]);
-        if( form.containsKey("keyword") )  keywords  = form.get("keyword");
-        if( form.containsKey("max") )      max_price = Integer.parseInt(form.get("max")[0]);
-        if( form.containsKey("min") )      min_price = Integer.parseInt(form.get("min")[0]);
+        for( String key : form.keySet() ){
+            if( form.get(key) == null || form.get(key).length == 0 ) {
+                continue;
+            } else if( key.equals("keyword") ) {
+                keywords = form.get("keyword");
+            } else if( form.get(key).length > 1 ) {
+                return badRequest("Please set only one 'ID' (and also 'max' and 'min')");
+            } else {
+                try {
+                    switch ( key ) {
+                        case "id" :
+                            id = Integer.parseInt(form.get(key)[0]);
+                            break;
+                        case "max" :
+                            max_price = Integer.parseInt(form.get(key)[0]);
+                            break;
+                        case "min" :
+                            min_price = Integer.parseInt(form.get(key)[0]);
+                            break;
+                        default:
+                            return badRequest("Invalid Parameter is included");
+                    }
+                } catch(NumberFormatException e) {
+                    return badRequest("Please set 'id', 'max' and 'min' as numerical values");
+                }
+            }
+        }
 
         // パラメータチェック
         if( max_price < min_price ) {
             return badRequest("Invalid parameter [ Please set it to be 'max' > 'min' ]");
-        } else if( form.containsKey("id") && form.get("id").length > 1 ) {
-            return badRequest("Please set the 'id' only one");
-        } else if( form.containsKey("max") && form.get("max").length > 1 ) {
-            return badRequest("Please set the 'max' only one");
-        } else if( form.containsKey("min") && form.get("min").length > 1 ) {
-            return badRequest("Please set the 'min' only one");
         }
 
         //　クエリ作成
@@ -115,11 +132,11 @@ public class ProductController extends Controller{
     /********************
         商品データ削除
      ********************/
-    @BodyParser.Of(SearchCondition.SearchConditionBodyParser.class)
+    @BodyParser.Of(DeleteCondition.SearchConditionBodyParser.class)
     public Result delete() {
 
         // リクエストパラメータを取得
-        SearchCondition sc = request().body().as(SearchCondition.class);
+        DeleteCondition sc = request().body().as(DeleteCondition.class);
 
         //　クエリ作成
         String query_select = "SELECT * FROM PRODUCT WHERE ";

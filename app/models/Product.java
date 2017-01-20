@@ -79,7 +79,7 @@ public class Product {
                         Product product = play.libs.Json.fromJson(json, Product.class);
 
                         List<String> errors = new ArrayList<>();
-                        if( product.getId() < 0 )                errors.add("Invalid parameter! ['id' must be positive]");
+                        if( product.getId() < 1 )                errors.add("Invalid parameter! ['id' must be positive]");
                         if( product.getImage_url().isEmpty() )   errors.add("Missing parameter! [image_url]");
                         if( product.getTitle().isEmpty() )       errors.add("Missing parameter! [title]");
                         if( product.getDescription().isEmpty() ) errors.add("Missing parameter! [description]");

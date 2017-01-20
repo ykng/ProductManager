@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class SearchCondition {
+public class DeleteCondition {
 
     private int id;
     private String keyword;
@@ -31,7 +31,7 @@ public class SearchCondition {
     public int getPrice() { return this.price; }
 
     // BodyParser
-    public static class SearchConditionBodyParser implements BodyParser<SearchCondition> {
+    public static class SearchConditionBodyParser implements BodyParser<DeleteCondition> {
 
         private BodyParser.Json jsonParser;
         private Executor executor;
@@ -42,7 +42,7 @@ public class SearchCondition {
             this.executor = executor;
         }
 
-        public Accumulator<ByteString, F.Either<Result, SearchCondition>> apply(Http.RequestHeader request) {
+        public Accumulator<ByteString, F.Either<Result, DeleteCondition>> apply(Http.RequestHeader request) {
             Accumulator<ByteString, F.Either<Result, JsonNode>> jsonAccumulator = jsonParser.apply(request);
             return jsonAccumulator.map(resultOrJson -> {
                 if (resultOrJson.left.isPresent()) {
@@ -50,7 +50,7 @@ public class SearchCondition {
                 } else {
                     JsonNode json = resultOrJson.right.get();
                     try {
-                        SearchCondition sc = play.libs.Json.fromJson(json, SearchCondition.class);
+                        DeleteCondition sc = play.libs.Json.fromJson(json, DeleteCondition.class);
                         List<String> errors = new ArrayList<>();
                         if( sc.getId() == 0 ){
                             errors.add("Missing parameter! ['id' is required]");

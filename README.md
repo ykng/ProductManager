@@ -63,5 +63,5 @@ idについては完全一致かどうか、maxかminが指定されている場
 入力したパラメータによる検索を行い、該当する商品を削除。  
 検索方法については、上の検索とほぼ同じ。priceについては完全一致で検索する。  
 
-**リクエスト例**  
+**リクエスト例**  
 <code>curl -X DELETE http://localhost:9000/products -H "Content-Type: application/json" -d '{"id":7, "keyword":"sample", "price":298}'</code>
