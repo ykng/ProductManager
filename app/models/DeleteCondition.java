@@ -17,7 +17,7 @@ import java.util.concurrent.Executor;
 public class DeleteCondition {
 
     private int id;
-    private String keyword;
+    private String keyword = "";
     private int price;
 
     // setter
