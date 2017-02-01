@@ -5,21 +5,22 @@
 ## 商品データ  
 | パラメータ | 型　| 必須 | サイズ | 説明　|  
 | ---- | ---- | ---- | ---- | ---- |  
-| id | 数値 | ◯ | 　 | 商品id |  
+| id | 数値 |  | 　 | 商品id |  
 | image_url | 文字列 | ◯　| 　 | 商品画像URL |  
 | title | 文字列 | ◯　| 最大100文字 | 商品タイトル |  
 | description | 文字列 |  　| 最大500文字 | 商品の説明文 |  
-| price | 数値 | ○ | 　 | 価格 |  
+| price | 数値 | ○ | 　 | 価格 |  
+※　必須　・・・　登録時に入力パラメータとして必須か  
 
 
-## routes  
+## routes  
 
 | HTTPメソッド | URL | 説明 |  
 | ---- | ---- | ---- |  
 | GET | /products/register | 登録フォームへアクセス |  
 | GET | /products/update/:id | 更新フォームへアクセス |  
 | POST | /products | 登録 |  
-| PATCH | /products/:id | idと一致する商品データを更新 |
+| PATCH | /products | idと一致する商品データを更新 |
 | GET | /products | 全商品データ検索 |  
 | GET | /products/:id | idによる商品データ検索 |  
 | DELETE | /products/:id | 削除 |  
@@ -33,7 +34,9 @@
 
 登録・更新をブラウザから行う。  
 両者とも画面は一緒だが、隠しパラメータとしてidが格納（登録時：NULL、更新時：URLで指定したid）されており、NULLかどうかで登録か更新か判定する。  
-
+　　  
+    
+----------------
 
 ## 登録
 - HTTPメソッド : POST
@@ -49,7 +52,7 @@
 **リクエスト例**  
 <code>curl -F 'image_url=image/url' -F 'title=sample_product' -F 'description=cheap' -F 'price=298' http://localhost:9000/products</code>
 　  
-
+　  
    
 ## 更新  
 - HTTPメソッド : PATCH  
@@ -65,7 +68,7 @@
 **リクエスト例**  
 <code>curl -F 'id=3' -F 'image_url=image/url3' -F 'title=sample_product3' -F 'description=BestPrice' -F 'price=598' http://localhost:9000/products</code>
 　  
-
+　  
 
 ## 全商品検索  
 - HTTPメソッド : GET  
@@ -76,8 +79,8 @@
 
 **リクエスト例**  
 <code>curl http://localhost:9000/products</code>  
-　
-
+　  
+　  
 
 ## IDによる商品検索   
 - HTTPメソッド : GET  
@@ -88,8 +91,8 @@
 
 **リクエスト例**  
 <code>curl http://localhost:9000/products/7</code>  
-　
-
+　  
+　  
    
 ## 削除
 - HTTPメソッド : DELETE  
