@@ -1,20 +1,13 @@
-@*
- * This template takes a single argument, a String containing a
- * message to display.
- *@
-@(message: String)
+@(productForm: Form[models.Product], isEdit: Boolean)
 
-@*
- * Call the `main` template with two arguments. The first
- * argument is a `String` with the title of the page, the second
- * argument is an `Html` object containing the body of the page.
- *@
-@main("Welcome to Play") {
+@main("Register Form") {
 
-    @*
-     * Get an `Html` object by calling the built-in Play welcome
-     * template and passing a `String` message.
-     *@
-    @play20.welcome(message, style = "Java")
-
+    @helper.form(action = routes.ProductController.register()) {
+        <input type="hidden" value="@productForm("id").value" name="id">
+        @helper.inputText(productForm("image_url"))
+        @helper.inputText(productForm("title"))
+        @helper.inputText(productForm("description"))
+        @helper.inputText(productForm("price"))
+        <input type="submit" value="Register" />
+    }
 }

@@ -2,14 +2,24 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Transition to registration form
+GET     /products/register          controllers.ProductController.init
+
+# Transition to update form
+GET     /products/update/:id        controllers.ProductController.edit(id: Long)
+
 # Register product data
 POST    /products                   controllers.ProductController.register
 
-# Search for products matching search conditions and show them in a list
-GET     /products                   controllers.ProductController.search
+# Update product data
+PATCH   /products                   controllers.ProductController.update
 
-# Delete Product by its name and price
-DELETE  /products                   controllers.ProductController.delete
+# Search for products matching search conditions and show them in a list
+GET     /products                   controllers.ProductController.searchAll
+GET     /products/:id               controllers.ProductController.search(id: Long)
+
+# Delete Product by its id
+DELETE  /products/:id               controllers.ProductController.delete(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

@@ -3,65 +3,102 @@
 商品データの登録・検索・削除を行う、RESTfulなAPIアプリケーション  
 
 ## 商品データ  
-| パラメータ | 型　| 必須 | サイズ | 説明　|
-| ---- | ---- | ---- | ---- | ---- |
-| id | 数値 | ◯ | 　 | 商品id |
-| image_url | 文字列 | ◯　| 　 | 商品画像URL |
-| title | 文字列 | ◯　| 最大100文字 | 商品タイトル |
-| description | 文字列 | ◯　| 最大500文字 | 商品の説明文 |
-| price | 数値 | 　　| 　 | 価格 |
+| パラメータ | 型　| 必須 | サイズ | 説明　|  
+| ---- | ---- | ---- | ---- | ---- |  
+| id | 数値 | ◯ | 　 | 商品id |  
+| image_url | 文字列 | ◯　| 　 | 商品画像URL |  
+| title | 文字列 | ◯　| 最大100文字 | 商品タイトル |  
+| description | 文字列 |  　| 最大500文字 | 商品の説明文 |  
+| price | 数値 | ○ | 　 | 価格 |  
 
 
 ## routes  
 
 | HTTPメソッド | URL | 説明 |  
 | ---- | ---- | ---- |  
+| GET | /products/register | 登録フォームへアクセス |  
+| GET | /products/update/:id | 更新フォームへアクセス |  
 | POST | /products | 登録 |  
-| GET | /products | 検索 |  
-| DELETE | /products | 削除 |  
-　  
+| PATCH | /products/:id | idと一致する商品データを更新 |
+| GET | /products | 全商品データ検索 |  
+| GET | /products/:id | idによる商品データ検索 |  
+| DELETE | /products/:id | 削除 |  
+　　  
 
 ----------------
 
+## 登録フォーム・更新フォーム
+- (登録)　URL : /products/register
+- (更新)　URL : /products/update/:id
+
+登録・更新をブラウザから行う。  
+両者とも画面は一緒だが、隠しパラメータとしてidが格納（登録時：NULL、更新時：URLで指定したid）されており、NULLかどうかで登録か更新か判定する。  
+
+
 ## 登録
 - HTTPメソッド : POST
-- 入力パラメータ : 商品データのJSON  
+- URL : /products
+- 入力パラメータ : フォームによる商品データ(idを除く)  
 - レスポンス形式 : JSON  
 - レスポンス内容 : 登録後の全商品データ  
 - レスポンスステータス : （成功した場合）201, (失敗した場合)400
 
-入力パラメータに基づいて商品データをデータベースに登録。  
-price(価格)の指定がなければ、0円となる。  
+入力パラメータに基づいて商品データをデータベースに登録。
+ただし、IDについては商品データ保存時に自動的に決定されるので入力する必要はない。  
 　  
 **リクエスト例**  
-<code>curl -X POST http://localhost:9000/products 　-H "Content-Type: application/json" -d '{"id":7, "image_url":"image/product7", "title":"product7", "description":"it is lucky product", "price":777}'</code>
+<code>curl -F 'image_url=image/url' -F 'title=sample_product' -F 'description=cheap' -F 'price=298' http://localhost:9000/products</code>
 　  
+
    
-## 検索  
-- HTTPメソッド : GET
-- 入力パラメータ : id（商品id）, keyword（検索キーワード）, max（最大価格）, min（最小価格） [全て任意] 
+## 更新  
+- HTTPメソッド : PATCH  
+- URL : /products
+- 入力パラメータ : フォームによる商品データ
 - レスポンス形式 : JSON  
-- レスポンス内容 : 検索条件にマッチする全商品データ
+- レスポンス内容 : 登録後の全商品データ  
+- レスポンスステータス : （成功した場合）201, (失敗した場合)400
+
+入力パラメータに基づいて商品データを更新。  
+登録時とは違い、入力パラメータにidを指定する必要がある。  
+　　  
+**リクエスト例**  
+<code>curl -F 'id=3' -F 'image_url=image/url3' -F 'title=sample_product3' -F 'description=BestPrice' -F 'price=598' http://localhost:9000/products</code>
+　  
+
+
+## 全商品検索  
+- HTTPメソッド : GET  
+- URL : /products  
+- レスポンス形式 : JSON  
+- レスポンス内容 : 全商品データ
 - レスポンスステータス : （成功した場合）200, (失敗した場合)400
 
-入力したパラメータによる検索を行い、該当する商品データを全て表示。  
-全てのパラメータを指定しても、複数指定でも、単独指定でも検索可能。  
-パラメータの指定が1つもなければ、全商品検索になる。  
-idについては完全一致かどうか、maxかminが指定されている場合は価格がその範囲内にあるか、keywordはtitleまたはdiscriptionの内容に含まれているかで検索を行う。  
+**リクエスト例**  
+<code>curl http://localhost:9000/products</code>  
+　
+
+
+## IDによる商品検索   
+- HTTPメソッド : GET  
+- URL : /products/:id  
+- レスポンス形式 : JSON  
+- レスポンス内容 : 検索条件に一致する商品データ
+- レスポンスステータス : （成功した場合）200, (失敗した場合)400
 
 **リクエスト例**  
-<code>curl http://localhost:9000/products\?id=7\&keyword=lucky\&keyword=product\&max=1000\&min=100</code>
-　  
+<code>curl http://localhost:9000/products/7</code>  
+　
+
    
 ## 削除
-- HTTPメソッド : DELETE
-- 入力パラメータ : id, keyword, price のJSON
+- HTTPメソッド : DELETE  
+- URL : /products/:id  
 - レスポンス形式 : JSON  
 - レスポンス内容 : 削除した商品データ
 - レスポンスステータス : （成功した場合）200, (失敗した場合)400
   
-入力したパラメータによる検索を行い、該当する商品を削除。  
-検索方法については、上の検索とほぼ同じ。priceについては完全一致で検索する。  
+idによる検索を行い、該当する商品を削除。  
 
 **リクエスト例**  
-<code>curl -X DELETE http://localhost:9000/products -H "Content-Type: application/json" -d '{"id":7, "keyword":"sample", "price":298}'</code>
+<code>curl -X DELETE http://localhost:9000/products/7 -H "Content-Type: application/json"</code>

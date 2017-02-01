@@ -1,102 +1,34 @@
 package models;
 
-import akka.util.ByteString;
-import com.fasterxml.jackson.databind.JsonNode;
-import play.libs.F;
-import play.libs.streams.Accumulator;
-import play.mvc.BodyParser;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.Results;
+import com.avaje.ebean.Model;
+import play.data.validation.Constraints.MaxLength;
+import play.data.validation.Constraints.Required;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
-public class Product {
+@Entity
+public class Product extends Model {
 
-    private int id;
-    private String image_url;
-    private String title;
-    private String description;
-    private int price;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
 
-    // setter
-    public void setId(int id) { this.id = id; }
-    public void setImage_url(String image_url) { this.image_url = image_url; }
-    public void setTitle(String title) { this.title = title; }
-    public void setDescription(String description) { this.description = description; }
-    public void setPrice(int price) { this.price = price; }
+    @Required
+    public String image_url;
 
-    // getter
-    public int getId(){ return this.id; }
-    public String getImage_url(){ return this.image_url; }
-    public String getTitle(){ return this.title; }
-    public String getDescription(){ return this.description; }
-    public int getPrice(){ return this.price; }
+    @Required
+    @MaxLength(100)
+    public String title;
 
-    public void setParam(String param_name, Object param) {
-        switch ( param_name ) {
-            case "id" :
-                setId((int) param);
-                break;
-            case "image_url" :
-                setImage_url((String) param);
-                break;
-            case "title" :
-                setTitle((String) param);
-                break;
-            case "description" :
-                setDescription((String) param);
-                break;
-            case "price" :
-                setPrice((int) param);
-                break;
-        }
-    }
+    @MaxLength(500)
+    public String description;
 
-    // BodyParser
-    public static class ProductBodyParser implements BodyParser<Product> {
+    @Required
+    public Long price;
 
-        private BodyParser.Json jsonParser;
-        private Executor executor;
+    public static Finder<Long, Product> find = new Finder<Long, Product>(Product.class);
 
-        @Inject
-        public ProductBodyParser(BodyParser.Json jsonParser, Executor executor) {
-            this.jsonParser = jsonParser;
-            this.executor = executor;
-        }
-
-        public Accumulator<ByteString, F.Either<Result, Product>> apply(Http.RequestHeader request) {
-            Accumulator<ByteString, F.Either<Result, JsonNode>> jsonAccumulator = jsonParser.apply(request);
-            return jsonAccumulator.map(resultOrJson -> {
-                if (resultOrJson.left.isPresent()) {
-                    return F.Either.Left(resultOrJson.left.get());
-                } else {
-                    JsonNode json = resultOrJson.right.get();
-                    try {
-                        Product product = play.libs.Json.fromJson(json, Product.class);
-
-                        List<String> errors = new ArrayList<>();
-                        if( product.getId() < 1 )                errors.add("Invalid parameter! ['id' must be positive]");
-                        if( product.getImage_url().isEmpty() )   errors.add("Missing parameter! [image_url]");
-                        if( product.getTitle().isEmpty() )       errors.add("Missing parameter! [title]");
-                        if( product.getDescription().isEmpty() ) errors.add("Missing parameter! [description]");
-                        if( product.getPrice() < 0)              errors.add("Invalid parameter! ['price' must be positive]");
-                        if( product.getTitle().length() > 100 ) {
-                            errors.add("'title' is too long! ['title' length is 100 characters]");
-                        }
-                        if( product.getDescription().length() > 500 ) {
-                            errors.add("'description' is too long! ['description' length is 100 characters]");
-                        }
-
-                        return errors.isEmpty() ? F.Either.Right(product) : F.Either.Left(Results.badRequest(errors.toString()));
-                    } catch (Exception e) {
-                        return F.Either.Left(Results.badRequest("Unable to read Product from json: " + e.getMessage()));
-                    }
-                }
-            }, executor);
-        }
-    }
 }

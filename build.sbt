@@ -1,9 +1,8 @@
-name := """my-second-app"""
+name := """ProductManager"""
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayJava)
-                  .enablePlugins(PlayEbean)
+lazy val ProductManager = (project in file(".")).enablePlugins(PlayJava, PlayEbean)
 
 scalaVersion := "2.11.7"
 
