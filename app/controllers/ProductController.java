@@ -1,6 +1,8 @@
 package controllers;
 
+import Utils.ImageManager;
 import models.Product;
+import play.Application;
 import play.data.Form;
 import play.data.FormFactory;
 import play.db.ebean.Transactional;
@@ -8,21 +10,24 @@ import play.libs.Json;
 import play.mvc.*;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 public class ProductController extends Controller{
 
     private Form<Product> forms;
+    private Provider<Application> appProvider;
 
     @Inject
-    public ProductController(FormFactory formFactory) {
+    public ProductController(FormFactory formFactory, Provider<Application> applicationProvider) {
         this.forms = formFactory.form(Product.class);
+        this.appProvider = applicationProvider;
     }
 
     public Result init() {
         Product product = new Product();
-        return ok(views.html.index.render(forms.fill(product), false));
+        return ok(views.html.index.render(forms.fill(product), false, "Register Form"));
     }
 
     public Result edit(Long id) {
@@ -30,7 +35,8 @@ public class ProductController extends Controller{
         if( product == null ) {
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
-        return ok(views.html.index.render(forms.fill(product), true));
+        // TODO 商品画像が渡されていない
+        return ok(views.html.index.render(forms.fill(product), true, "Edit product data of ID " + String.valueOf(id)));
     }
 
     /********************
@@ -38,7 +44,7 @@ public class ProductController extends Controller{
      ********************/
     @Transactional
     public Result register() {
-        return createOrUpdate(false);
+        return registerOrUpdate(false);
     }
 
     /********************
@@ -46,15 +52,16 @@ public class ProductController extends Controller{
      ********************/
     @Transactional
     public Result update() {
-        return createOrUpdate(true);
+        return registerOrUpdate(true);
     }
 
-    private Result createOrUpdate(boolean isEdit) {
+    private Result registerOrUpdate(boolean isEdit){
         Form<Product> requestForm = forms.bindFromRequest();
         if (requestForm.hasErrors()) {
-            return badRequest(views.html.index.render(requestForm, isEdit));
+            return badRequest("Illegal parameter is included or there is no entry for required item");
         }
         Product product = requestForm.get();
+        product.image = ImageManager.upload(request(), appProvider).getFilename();
         if( product.id == null ) {
             product.save();
         } else {
@@ -77,6 +84,8 @@ public class ProductController extends Controller{
         return ok(Json.prettyPrint(Json.toJson(Product.find.byId(id))));
     }
 
+    // TODO id以外での検索もできるように
+
     /********************
          商品データ削除
      ********************/
@@ -87,6 +96,7 @@ public class ProductController extends Controller{
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
         product.delete();
+        // TODO 対応する画像も削除
         return ok(Json.prettyPrint(Json.toJson(product)));
     }
 }

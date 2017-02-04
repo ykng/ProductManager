@@ -1,13 +1,20 @@
-@(productForm: Form[models.Product], isEdit: Boolean)
+@(productForm: Form[models.Product], isEdit: Boolean, message: String)
 
-@main("Register Form") {
+@import helper._
 
-    @helper.form(action = routes.ProductController.register()) {
+@main("Form") {
+
+    @if(message != null) {
+        <h1>@message</h1>
+    }
+
+    @form(action = routes.ProductController.register(), 'enctype -> "multipart/form-data") {
         <input type="hidden" value="@productForm("id").value" name="id">
-        @helper.inputText(productForm("image_url"))
-        @helper.inputText(productForm("title"))
-        @helper.inputText(productForm("description"))
-        @helper.inputText(productForm("price"))
-        <input type="submit" value="Register" />
+        <div>* IMAGE *</div>
+        <div><input type="file" value="@productForm("image").value" name="image"></div>
+        <div>@inputText(productForm("title"), '_label -> "* TITLE *")</div>
+        <div>@inputText(productForm("description"), '_label -> "* DESCRIPTION *")</div>
+        <div>@inputText(productForm("price"), '_label -> "* PRICE *")</div>
+        <div><input type="submit" value="Register" /></div>
     }
 }

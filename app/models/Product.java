@@ -4,10 +4,7 @@ import com.avaje.ebean.Model;
 import play.data.validation.Constraints.MaxLength;
 import play.data.validation.Constraints.Required;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class Product extends Model {
@@ -16,8 +13,7 @@ public class Product extends Model {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Required
-    public String image_url;
+    public String image;
 
     @Required
     @MaxLength(100)

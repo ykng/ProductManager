@@ -5,7 +5,7 @@
 
 create table product (
   id                            bigint auto_increment not null,
-  image_url                     varchar(255),
+  image                         varchar(255),
   title                         varchar(255),
   description                   varchar(255),
   price                         bigint,
