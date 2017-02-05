@@ -3,16 +3,16 @@
 # ~~~~
 
 # Transition to registration form
-GET     /products/register          controllers.ProductController.init
+GET     /products/register          controllers.FormController.init
 
 # Transition to update form
-GET     /products/update/:id        controllers.ProductController.edit(id: Long)
+GET     /products/update/:id        controllers.FormController.edit(id: Long)
 
 # Register product data
 POST    /products                   controllers.ProductController.register
 
 # Update product data
-PATCH   /products                   controllers.ProductController.update
+POST    /products/:id               controllers.ProductController.update(id: Long)
 
 # Search for products matching search conditions and show them in a list
 GET     /products                   controllers.ProductController.searchAll

@@ -3,6 +3,13 @@
 
 # --- !Ups
 
+create table image (
+  id                            bigint auto_increment not null,
+  name                          varchar(255),
+  content_type                  varchar(255),
+  constraint pk_image primary key (id)
+);
+
 create table product (
   id                            bigint auto_increment not null,
   image                         varchar(255),
@@ -14,6 +21,8 @@ create table product (
 
 
 # --- !Downs
+
+drop table if exists image;
 
 drop table if exists product;
 

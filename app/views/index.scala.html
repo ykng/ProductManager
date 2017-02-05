@@ -1,6 +1,16 @@
 @(productForm: Form[models.Product], isEdit: Boolean, message: String)
 
+@id = @{productForm("id").value.toLong}
+
 @import helper._
+
+@action = @{
+    if (isEdit) {
+        routes.ProductController.update(id)
+    } else {
+        routes.ProductController.register()
+    }
+}
 
 @main("Form") {
 
@@ -8,10 +18,10 @@
         <h1>@message</h1>
     }
 
-    @form(action = routes.ProductController.register(), 'enctype -> "multipart/form-data") {
+    @form(action = action, 'enctype -> "multipart/form-data") {
         <input type="hidden" value="@productForm("id").value" name="id">
         <div>* IMAGE *</div>
-        <div><input type="file" value="@productForm("image").value" name="image"></div>
+        <div><input type="file" accept='image/*' value="@productForm("image").value" name="image"></div>
         <div>@inputText(productForm("title"), '_label -> "* TITLE *")</div>
         <div>@inputText(productForm("description"), '_label -> "* DESCRIPTION *")</div>
         <div>@inputText(productForm("price"), '_label -> "* PRICE *")</div>

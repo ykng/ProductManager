@@ -50,7 +50,7 @@
 ただし、IDについては商品データ保存時に自動的に決定されるので入力する必要はない。  
 　  
 **リクエスト例**  
-<code>curl -F 'image_url=image/url' -F 'title=sample_product' -F 'description=cheap' -F 'price=298' http://localhost:9000/products</code>
+<code>curl -F 'image=image/url' -F 'title=sample_product' -F 'description=cheap' -F 'price=298' http://localhost:9000/products</code>
 　  
 　  
    
@@ -66,7 +66,7 @@
 登録時とは違い、入力パラメータにidを指定する必要がある。  
 　　  
 **リクエスト例**  
-<code>curl -F 'id=3' -F 'image_url=image/url3' -F 'title=sample_product3' -F 'description=BestPrice' -F 'price=598' http://localhost:9000/products</code>
+<code>curl -F 'id=3' -F 'image=image/url3' -F 'title=sample_product3' -F 'description=BestPrice' -F 'price=598' http://localhost:9000/products</code>
 　  
 　  
 
@@ -89,6 +89,8 @@
 - レスポンス内容 : 検索条件に一致する商品データ
 - レスポンスステータス : （成功した場合）200, (失敗した場合)400
 
+IDによる商品検索を行う  
+
 **リクエスト例**  
 <code>curl http://localhost:9000/products/7</code>  
 　  
@@ -104,4 +106,4 @@
 idによる検索を行い、該当する商品を削除。  
 
 **リクエスト例**  
-<code>curl -X DELETE http://localhost:9000/products/7 -H "Content-Type: application/json"</code>
+<code>curl -X DELETE http://localhost:9000/products/7</code>
