@@ -2,7 +2,10 @@ package controllers;
 
 import models.Image;
 import models.Product;
+import models.SearchCondition;
 import play.Application;
+import play.data.Form;
+import play.data.FormFactory;
 import play.db.ebean.Transactional;
 import play.libs.Json;
 import play.mvc.Controller;
@@ -16,10 +19,12 @@ import javax.inject.Singleton;
 public class ProductController extends Controller{
 
     private Provider<Application> appProvider;
+    private Form<SearchCondition> searchForm;
 
     @Inject
-    public ProductController(Provider<Application> applicationProvider) {
+    public ProductController(Provider<Application> applicationProvider, FormFactory formFactory) {
         this.appProvider = applicationProvider;
+        this.searchForm = formFactory.form(SearchCondition.class);
     }
 
     /********************
@@ -39,20 +44,22 @@ public class ProductController extends Controller{
     }
 
     /********************
-        全商品データ検索
+        商品データ検索
      ********************/
-    public Result searchAll() {
-        return ok(Json.prettyPrint(Json.toJson(Product.find.all())));
+    public Result search() {
+        Form<SearchCondition> form = searchForm.bindFromRequest();
+        if (form.hasErrors()) {
+            return badRequest("Invalid parameter");
+        }
+        return ok(Json.prettyPrint(Json.toJson(form.get().search())));
     }
 
     /********************
-      商品データ検索 by ID
+          検索 by ID
      ********************/
-    public Result search(long id) {
+    public Result searchByID(long id) {
         return ok(Json.prettyPrint(Json.toJson(Product.find.byId(id))));
     }
-
-    // TODO id以外での検索もできるように
 
     /********************
          商品データ削除
@@ -69,4 +76,6 @@ public class ProductController extends Controller{
         image.delete();
         return ok(Json.prettyPrint(Json.toJson(product)));
     }
+
+    // TODO badrequestもうちょい綺麗に
 }

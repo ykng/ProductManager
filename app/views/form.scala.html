@@ -18,7 +18,7 @@
         <h1>@message</h1>
     }
 
-    @form(action = action, 'enctype -> "multipart/form-data") {
+    @helper.form(action = action, 'enctype -> "multipart/form-data") {
         <input type="hidden" value="@productForm("id").value" name="id">
         <div>* IMAGE *</div>
         <div><input type="file" accept='image/*' value="@productForm("image").value" name="image"></div>

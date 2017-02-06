@@ -31,7 +31,7 @@ public class FormController extends Controller {
      ********************/
     public Result init() {
         Product product = new Product();
-        return ok(views.html.index.render(forms.fill(product), false, "Register Form"));
+        return ok(views.html.form.render(forms.fill(product), false, "Register Form"));
     }
 
     /********************
@@ -43,20 +43,20 @@ public class FormController extends Controller {
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
         // TODO 商品画像が渡されていない
-        return ok(views.html.index.render(
+        return ok(views.html.form.render(
                 forms.fill(product), true, "Edit product data of ID " + String.valueOf(id)));
     }
 
     protected static Result registerOrUpdate(boolean isEdit, Provider<Application> appProvider){
         Form<Product> requestForm = forms.bindFromRequest();
         if (requestForm.hasErrors()) {
-            return badRequest(views.html.index.render(requestForm, isEdit,
+            return badRequest(views.html.form.render(requestForm, isEdit,
                     "Invalid parameter is included or there is no entry for required item"));
         }
+        Http.MultipartFormData.FilePart<File> file = ImageFileManager.upload(request());
 
         /** 商品データ登録・更新 **/
         Product product = requestForm.get();
-        Http.MultipartFormData.FilePart<File> file = ImageFileManager.upload(request());
         product.image = file.getFilename();
         if (!isEdit) {
             product.save();

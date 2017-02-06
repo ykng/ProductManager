@@ -15,8 +15,8 @@ POST    /products                   controllers.ProductController.register
 POST    /products/:id               controllers.ProductController.update(id: Long)
 
 # Search for products matching search conditions and show them in a list
-GET     /products                   controllers.ProductController.searchAll
-GET     /products/:id               controllers.ProductController.search(id: Long)
+GET     /products                   controllers.ProductController.search
+GET     /products/:id               controllers.ProductController.searchByID(id: Long)
 
 # Delete Product by its id
 DELETE  /products/:id               controllers.ProductController.delete(id: Long)
