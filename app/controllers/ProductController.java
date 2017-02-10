@@ -40,6 +40,7 @@ public class ProductController extends Controller{
      ********************/
     @Transactional
     public Result update(long id) {
+        Image.find.byId(id).deleteFile(appProvider);
         return FormController.registerOrUpdate(true, appProvider);
     }
 
@@ -48,10 +49,9 @@ public class ProductController extends Controller{
      ********************/
     public Result search() {
         Form<SearchCondition> form = searchForm.bindFromRequest();
-        if (form.hasErrors()) {
-            return badRequest("Invalid parameter");
-        }
-        return ok(Json.prettyPrint(Json.toJson(form.get().search())));
+        return form.hasErrors()
+                ? badRequest("Invalid parameter")
+                : ok(Json.prettyPrint(Json.toJson(form.get().search())));
     }
 
     /********************
@@ -76,6 +76,4 @@ public class ProductController extends Controller{
         image.delete();
         return ok(Json.prettyPrint(Json.toJson(product)));
     }
-
-    // TODO badrequestもうちょい綺麗に
 }

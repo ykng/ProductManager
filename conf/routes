@@ -3,10 +3,10 @@
 # ~~~~
 
 # Transition to registration form
-GET     /products/register          controllers.FormController.init
+GET     /products/form              controllers.FormController.init
 
 # Transition to update form
-GET     /products/update/:id        controllers.FormController.edit(id: Long)
+GET     /products/form/:id          controllers.FormController.edit(id: Long)
 
 # Register product data
 POST    /products                   controllers.ProductController.register

@@ -1,6 +1,6 @@
 package controllers;
 
-import Utils.ImageFileManager;
+import models.ImageFileManager;
 import models.Image;
 import models.Product;
 import play.Application;
@@ -22,7 +22,7 @@ public class FormController extends Controller {
     private static Form<Product> forms;
 
     @Inject
-    public FormController(FormFactory formFactory, Provider<Application> applicationProvider) {
+    public FormController(FormFactory formFactory) {
         this.forms = formFactory.form(Product.class);
     }
 
@@ -30,24 +30,22 @@ public class FormController extends Controller {
       　　登録フォーム
      ********************/
     public Result init() {
-        Product product = new Product();
-        return ok(views.html.form.render(forms.fill(product), false, "Register Form"));
+        return ok(views.html.form.render(forms.fill(new Product()), false, "Register Form"));
     }
 
     /********************
      　　 編集フォーム
      ********************/
-    public Result edit(Long id) {
+    public Result edit(long id) {
         Product product = Product.find.byId(id);
         if( product == null ) {
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
-        // TODO 商品画像が渡されていない
         return ok(views.html.form.render(
-                forms.fill(product), true, "Edit product data of ID " + String.valueOf(id)));
+                forms.fill(product), true, "Edit product data of ID : " + String.valueOf(id)));
     }
 
-    protected static Result registerOrUpdate(boolean isEdit, Provider<Application> appProvider){
+    protected static Result registerOrUpdate(boolean isEdit, Provider<Application> appProvider) {
         Form<Product> requestForm = forms.bindFromRequest();
         if (requestForm.hasErrors()) {
             return badRequest(views.html.form.render(requestForm, isEdit,

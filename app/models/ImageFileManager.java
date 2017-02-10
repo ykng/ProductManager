@@ -1,4 +1,4 @@
-package Utils;
+package models;
 
 import play.mvc.Http;
 
