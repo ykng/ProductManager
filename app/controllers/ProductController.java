@@ -40,6 +40,9 @@ public class ProductController extends Controller{
      ********************/
     @Transactional
     public Result update(long id) {
+        if (Product.find.byId(id) == null) {
+            return badRequest("There is no product with ID : " + String.valueOf(id) );
+        }
         Image.find.byId(id).deleteFile(appProvider);
         return FormController.registerOrUpdate(true, appProvider);
     }
@@ -67,7 +70,7 @@ public class ProductController extends Controller{
     @Transactional
     public Result delete(long id) {
         Product product = Product.find.byId(id);
-        if( product == null ) {
+        if (product == null) {
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
         product.delete();

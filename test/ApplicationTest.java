@@ -1,85 +1,94 @@
+import akka.stream.Materializer;
+import akka.stream.javadsl.FileIO;
+import akka.stream.javadsl.Source;
+import akka.util.ByteString;
+import models.Product;
 import org.junit.*;
-import play.api.libs.json.JsValue;
-import play.api.libs.json.Json;
 import play.mvc.*;
+import play.mvc.Http.MultipartFormData.DataPart;
+import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Http.RequestBuilder;
 import play.test.*;
 
-import java.io.StringWriter;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static play.test.Helpers.*;
 import static org.junit.Assert.*;
 
-
-// TODO 修正
 public class ApplicationTest extends WithApplication {
 
     @Test
     public void goodRegister() {
+        RequestBuilder rb = new RequestBuilder().method(POST).uri("/products");
 
-        List<JsValue> jsValues = new ArrayList<>();
-        // 商品パラメータ全指定
-        jsValues.add(Json.parse("{\"id\":7,\"image_url\":\"product7\",\"title\":\"product7\"," +
-                "\"description\":\"it is lucky product\",\"price\":777}"));
-        // priceのみ指定なし
-        jsValues.add(Json.parse("{\"id\":8,\"image_url\":\"product8\",\"title\":\"product8\"," +
-                "\"description\":\"it is lucky product\"}"));
+        Materializer mat = app.injector().instanceOf(Materializer.class);
+        DataPart dp1 = new DataPart("title", "sample");
+        DataPart dp2 = new DataPart("description", "cheap");
+        DataPart dp3 = new DataPart("price", "198");
+        File file = new File(app.path().getPath() + "/public/images/default.png");
+        FilePart<Source<ByteString, ?>> fp =
+                new FilePart<>("image", "default.txt", "image/png", FileIO.fromFile(file));
 
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(POST).uri("/products");
-        List<Result> goodList = new ArrayList<>();
-
-        for( JsValue jsValue : jsValues ) {
-            Result result = route(rb.bodyJson(jsValue));
-            assertEquals(CREATED, result.status());
-        }
+        assertEquals(CREATED, route(rb.bodyMultipart(Arrays.asList(dp1, dp2, dp3, fp), mat)).status());
     }
 
     @Test
     public void badRegister() {
+        RequestBuilder rb = new RequestBuilder().method(POST).uri("/products");
+        List<HashMap<String, String>> mapList = new ArrayList<>();
 
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(POST).uri("/products");
+        // priceに文字が含まれている
+        HashMap<String, String> m1 = new HashMap<>();
+        m1.put("title", "bad_product");
+        m1.put("price", "100yen");
+        mapList.add(m1);
 
-        String t101 = new StringWriter(){{ for(int i = 0; i<101; i++) write("a"); }}.toString();
-        String t501 = new StringWriter(){{ for(int i = 0; i<501; i++) write("a"); }}.toString();
+        // titleの入力がない
+        HashMap<String, String> m2 = new HashMap<>();
+        m2.put("price", "100");
+        mapList.add(m2);
 
-        List<String> strl = new ArrayList<>();
-        // idの指定なし（id=0）
-        strl.add("{\"image_url\":\"product7\",\"title\":\"product7\",\"description\":\"it is lucky product\"}");
-        // image_urlの指定なし
-        strl.add("{\"id\":7,\"title\":\"product7\",\"description\":\"it is lucky product\"}");
-        // titleの指定なし
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"description\":\"it is lucky product\"}");
-        // descriptionの指定なし
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"title\":\"product7\"}");
-        // priceがマイナス
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"title\":\"product7\",\"description\":\"lucky\",\"price\":-7}");
-        // titleが100文字超え
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"title\":\"" + t101 + "\",\"description\":\"lucky\"}");
-        // descriptionが500文字超え
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"title\":\"" + t501 + "\",\"description\":\"lucky\"}");
-        // idに文字を指定
-        strl.add("{\"id\":\"id\",\"image_url\":\"product7\",\"title\":\"p7\",\"description\":\"lucky\",\"price\":777}");
-        // priceに文字を指定
-        strl.add("{\"id\":7,\"image_url\":\"product7\",\"title\":\"p7\",\"description\":\"lucky\",\"price\":\"a\"}");
-
-        for( String str : strl ) {
-            Result result = route(rb.bodyJson(Json.parse(str)));
+        for( HashMap<String, String> hashMap : mapList ) {
+            Result result = route(rb.bodyForm(hashMap));
             assertEquals(BAD_REQUEST, result.status());
         }
     }
 
     @Test
-    public void goodSearch() {
+    public void goodUpdate() {
+        RequestBuilder rb = new RequestBuilder().method(POST).uri("/products/" + findMinId());
 
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(GET);
+        Materializer mat = app.injector().instanceOf(Materializer.class);
+        DataPart dID = new DataPart("id", findMinId());
+        DataPart dp1 = new DataPart("title", "updated product");
+        DataPart dp2 = new DataPart("description", "updated");
+        DataPart dp3 = new DataPart("price", "12345");
+        File file = new File(app.path().getPath() + "/public/images/default.png");
+        FilePart<Source<ByteString, ?>> fp =
+                new FilePart<>("image", "default.txt", "image/png", FileIO.fromFile(file));
+
+        assertEquals(CREATED, route(rb.bodyMultipart(Arrays.asList(dID, dp1, dp2, dp3, fp), mat)).status());
+    }
+
+    @Test
+    public void badUpdate() {
+        // 存在しないID
+        assertEquals(BAD_REQUEST, route(new RequestBuilder().method(POST).uri("/products/0")).status());
+    }
+
+    @Test
+    public void goodSearch() {
+        RequestBuilder rb = new RequestBuilder().method(GET);
         List<Result> goodList = new ArrayList<>();
 
         goodList.add(route(rb.uri("/products")));
-        goodList.add(route(rb.uri("/products?id=1")));
-        goodList.add(route(rb.uri("/products?id=1&keyword=cheap")));
-        goodList.add(route(rb.uri("/products?id=1&keyword=cheap&keyword=product")));
-        goodList.add(route(rb.uri("/products?id=1&keyword=cheap&keyword=product&max=1000")));
+        goodList.add(route(rb.uri("/products/1")));
+        goodList.add(route(rb.uri("/products?keyword=cheap")));
+        goodList.add(route(rb.uri("/products?keyword=cheap&max=500&min=50")));
 
         for(Result result : goodList) {
             assertEquals(OK, result.status());
@@ -88,59 +97,28 @@ public class ApplicationTest extends WithApplication {
 
     @Test
     public void badSearch() {
-
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(GET);
-        List<Result> badList = new ArrayList<>();
-
-        badList.add(route(rb.uri("/products?id=1&id=2")));           // idを二つ指定
-        badList.add(route(rb.uri("/products?id=bad")));              // idに文字を指定
-        badList.add(route(rb.uri("/products?max=100&min=500")));     // max < minとなっている
-        badList.add(route(rb.uri("/products?price=500")));           // 不正なパラメータ指定
-
-        for(Result result : badList) {
-            assertEquals(BAD_REQUEST, result.status());
-        }
+        // maxやminに文字が含まれている
+        assertEquals(BAD_REQUEST, route(new RequestBuilder().method(GET).uri("/products?max=100yen")).status());
     }
-
 
     @Test
     public void goodDelete() {
-
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(DELETE).uri("/products");
-
-        List<JsValue> jsValues = new ArrayList<>();
-        // idのみ指定
-        jsValues.add(Json.parse("{\"id\":7}"));
-        // id, keyword指定
-        jsValues.add(Json.parse("{\"id\":8,\"keyword\":\"product8\"}"));
-        // id, price指定
-        jsValues.add(Json.parse("{\"id\":7,\"price\":777}"));
-        // id, keyword, price全指定
-        jsValues.add(Json.parse("{\"id\":7,\"keyword\":\"product7\",\"price\":777}"));
-
-        for( JsValue jsValue : jsValues ) {
-            Result result = route(rb.bodyJson(jsValue));
-            assertEquals(OK, result.status());
-        }
+        assertEquals(OK, route(new RequestBuilder().method(DELETE).uri("/products/" + findMinId())).status());
     }
 
     @Test
     public void badDelete() {
+        // 存在しないID
+        assertEquals(BAD_REQUEST, route(new RequestBuilder().method(DELETE).uri("/products/0")).status());
+    }
 
-        Http.RequestBuilder rb = new Http.RequestBuilder().method(DELETE).uri("/products");
-
-        List<JsValue> jsValues = new ArrayList<>();
-        // idの指定なし
-        jsValues.add(Json.parse("{\"keyword\":\"product8\"}"));
-        // idに文字指定
-        jsValues.add(Json.parse("{\"id\":\"id\"}"));
-        // priceに文字指定
-        jsValues.add(Json.parse("{\"id\":7,\"price\":\"price\"}"));
-
-        for( JsValue jsValue : jsValues ) {
-            Result result = route(rb.bodyJson(jsValue));
-            assertEquals(BAD_REQUEST, result.status());
+    private String findMinId() {
+        for (long i=0; i<Long.MAX_VALUE; i++) {
+            if (Product.find.byId(i) != null) {
+                return String.valueOf(i);
+            }
         }
+        return "0";
     }
 
 }

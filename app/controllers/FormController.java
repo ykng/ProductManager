@@ -39,7 +39,7 @@ public class FormController extends Controller {
     public Result edit(long id) {
         Product product = Product.find.byId(id);
         if( product == null ) {
-            return badRequest("There is no product with ID : " + String.valueOf(id) );
+            return badRequest("There is no product with ID : " + String.valueOf(id));
         }
         return ok(views.html.form.render(
                 forms.fill(product), true, "Edit product data of ID : " + String.valueOf(id)));
