@@ -31,7 +31,7 @@ public class ApplicationTest extends WithApplication {
         DataPart dp3 = new DataPart("price", "198");
         File file = new File(app.path().getPath() + "/public/images/default.png");
         FilePart<Source<ByteString, ?>> fp =
-                new FilePart<>("image", "default.txt", "image/png", FileIO.fromFile(file));
+                new FilePart<>("image", file.getName(), "image/png", FileIO.fromFile(file));
 
         assertEquals(CREATED, route(rb.bodyMultipart(Arrays.asList(dp1, dp2, dp3, fp), mat)).status());
     }
@@ -69,7 +69,7 @@ public class ApplicationTest extends WithApplication {
         DataPart dp3 = new DataPart("price", "12345");
         File file = new File(app.path().getPath() + "/public/images/default.png");
         FilePart<Source<ByteString, ?>> fp =
-                new FilePart<>("image", "default.txt", "image/png", FileIO.fromFile(file));
+                new FilePart<>("image", file.getName(), "image/png", FileIO.fromFile(file));
 
         assertEquals(CREATED, route(rb.bodyMultipart(Arrays.asList(dID, dp1, dp2, dp3, fp), mat)).status());
     }

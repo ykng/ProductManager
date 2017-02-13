@@ -1,6 +1,7 @@
 package controllers;
 
 import models.Image;
+import models.ImageFileManager;
 import models.Product;
 import models.SearchCondition;
 import play.Application;
@@ -43,7 +44,7 @@ public class ProductController extends Controller{
         if (Product.find.byId(id) == null) {
             return badRequest("There is no product with ID : " + String.valueOf(id) );
         }
-        Image.find.byId(id).deleteFile(appProvider);
+        ImageFileManager.deleteFile(appProvider, Image.find.byId(id));
         return FormController.registerOrUpdate(true, appProvider);
     }
 
@@ -75,7 +76,7 @@ public class ProductController extends Controller{
         }
         product.delete();
         Image image = Image.find.byId(id);
-        image.deleteFile(appProvider);
+        ImageFileManager.deleteFile(appProvider, image);
         image.delete();
         return ok(Json.prettyPrint(Json.toJson(product)));
     }

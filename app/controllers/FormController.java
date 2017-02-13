@@ -64,7 +64,7 @@ public class FormController extends Controller {
 
         /** 画像データ登録・更新 **/
         Image image = new Image(product.id, file.getFilename(), file.getContentType());
-        image.renameFile(appProvider, file.getFile());
+        ImageFileManager.renameFile(appProvider, file.getFile(), image);
         if (!isEdit) {
             image.save();
             return created(Json.prettyPrint(Json.toJson(Product.find.all())));
